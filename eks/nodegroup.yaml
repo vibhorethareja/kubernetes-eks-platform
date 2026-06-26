@@ -1,0 +1,25 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: flask-eks-cluster
+  region: eu-north-1
+
+availabilityZones:
+  - eu-north-1a
+  - eu-north-1b
+  - eu-north-1c
+
+managedNodeGroups:
+  - name: flask-nodes-v2
+    instanceTypes:
+      - t3.medium
+      - t3.large
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 3
+    volumeSize: 20
+    iam:
+      withAddonPolicies:
+        cloudWatch: true
+        autoScaler: true

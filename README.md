@@ -216,3 +216,54 @@ helm uninstall monitoring -n monitoring
 - kubectl CLI proficiency
 - Multi-namespace Kubernetes architecture
 - Local Kubernetes development with Minikube
+## AWS EKS Deployment (Fargate)
+
+The application is deployed to a managed Amazon EKS cluster running on AWS Fargate
+(serverless compute — no EC2 nodes to manage).
+
+### Architecture
+- **Cluster:** `flask-fargate` (EKS, eu-west-1 / Ireland)
+- **Compute:** AWS Fargate profiles for `default`, `kube-system`, and `flask-app` namespaces
+- **Image registry:** Amazon ECR (`flask-k8s-app:latest`, built for linux/amd64)
+- **Deployment:** Helm chart (`helm/flask-app`), 2 replicas
+- **Autoscaling:** HorizontalPodAutoscaler (min 2, max 5 pods, target 70% CPU), backed by metrics-server
+- **Networking:** ClusterIP service on port 5000
+
+### Deploy steps
+
+1. Build and push the image to ECR:
+
+```bash
+docker build --platform linux/amd64 -t <account>.dkr.ecr.eu-west-1.amazonaws.com/flask-k8s-app:latest .
+docker push <account>.dkr.ecr.eu-west-1.amazonaws.com/flask-k8s-app:latest
+```
+
+2. Create the Fargate cluster:
+
+```bash
+eksctl create cluster --name flask-fargate --region eu-west-1 --fargate
+```
+
+3. Create the namespace and its Fargate profile:
+
+```bash
+kubectl create namespace flask-app
+eksctl create fargateprofile --cluster flask-fargate --region eu-west-1 --name fp-flask-app --namespace flask-app
+```
+
+4. Deploy via Helm (image pulled from ECR):
+
+```bash
+helm upgrade --install flask-app helm/flask-app --namespace flask-app \
+  --set image.repository=<727508844855>.dkr.ecr.eu-west-1.amazonaws.com/flask-k8s-app \
+  --set image.pullPolicy=Always \
+  --set service.type=ClusterIP
+```
+
+5. Access the app locally:
+
+```bash
+kubectl port-forward -n flask-app svc/flask-app-service 8080:5000
+```
+
+Then open http://localhost:8080
