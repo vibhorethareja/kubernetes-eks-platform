@@ -33,6 +33,7 @@ Liveness + Readiness probes monitor pod health automatically
 
 ## Project Structure
 
+```
 kubernetes-eks-platform/
 ├── app/
 │   ├── main.py                   # Flask app with /, /health, /info
@@ -48,7 +49,13 @@ kubernetes-eks-platform/
 │           └── hpa.yaml          # Horizontal Pod Autoscaler
 ├── k8s/
 │   └── namespace.yaml            # flask-app namespace
-└── screenshots/                  # Architecture proof screenshots
+├── eks/
+│   ├── cluster.yaml         # eksctl cluster config (EC2 node group variant)
+│   └── nodegroup.yaml       # eksctl node group config (AZ-pinned)
+├── monitoring/              # Prometheus + Grafana config
+├── screenshots/             # Deployment proof screenshots
+└── README.md
+```
 
 ## Key Features
 
@@ -234,8 +241,8 @@ The application is deployed to a managed Amazon EKS cluster running on AWS Farga
 1. Build and push the image to ECR:
 
 ```bash
-docker build --platform linux/amd64 -t <account>.dkr.ecr.eu-west-1.amazonaws.com/flask-k8s-app:latest .
-docker push <account>.dkr.ecr.eu-west-1.amazonaws.com/flask-k8s-app:latest
+docker build --platform linux/amd64 -t <727508844855>.dkr.ecr.eu-west-1.amazonaws.com/flask-k8s-app:latest .
+docker push <727508844855>.dkr.ecr.eu-west-1.amazonaws.com/flask-k8s-app:latest
 ```
 
 2. Create the Fargate cluster:
@@ -267,3 +274,41 @@ kubectl port-forward -n flask-app svc/flask-app-service 8080:5000
 ```
 
 Then open http://localhost:8080
+
+## Deployment Screenshots EKS (AWS Fargate)
+
+**Cluster ready:**
+![EKS cluster ready](screenshots/eks-01-cluster-ready.png)
+
+**Pods scheduled on Fargate:**
+![Pods on Fargate](screenshots/eks-02-pods-on-fargate.png)
+
+**HorizontalPodAutoscaler active:**
+![HPA autoscaling](screenshots/eks-03-hpa-autoscaling.png)
+
+**Service:**
+![Service](screenshots/eks-04-service.png)
+
+**Application running:**
+![App in browser](screenshots/eks-05-app-browser.png)
+
+**Fargate profiles:**
+![Fargate profiles](screenshots/eks-06-fargate-profiles.png)
+
+**Helm release:**
+![Helm release](screenshots/eks-07-helm-release.png)
+
+**Image in Amazon ECR:**
+![ECR image](screenshots/eks-08-ecr-image.png)
+
+### Local monitoring stack (Minikube)
+
+**Prometheus targets:**
+![Prometheus targets](screenshots/prometheus-targets.png)
+
+**Grafana dashboard:**
+![Grafana dashboard](screenshots/grafana-top.png)
+![Grafana node metrics](screenshots/grafana-node.png)
+
+**Monitoring pods:**
+![Monitoring pods](screenshots/monitoring-pods.png)
